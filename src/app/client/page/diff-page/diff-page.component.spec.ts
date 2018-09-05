@@ -1,20 +1,20 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { FileLoaderComponent } from './file-loader.component';
+import { DiffPageComponent } from './diff-page.component';
 
-describe('FileLoaderComponent', () => {
-  let component: FileLoaderComponent;
-  let fixture: ComponentFixture<FileLoaderComponent>;
+describe('DiffPageComponent', () => {
+  let component: DiffPageComponent;
+  let fixture: ComponentFixture<DiffPageComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ FileLoaderComponent ],
+      declarations: [ DiffPageComponent ],
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(FileLoaderComponent);
+    fixture = TestBed.createComponent(DiffPageComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

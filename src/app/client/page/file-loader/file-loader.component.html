@@ -1,4 +1,11 @@
-<form>
-  <textarea matInput placeholder="Write old text version"></textarea>
-  <textarea matInput placeholder="Write new text version"></textarea>
+<form #loadForm="ngForm" (ngSubmit)="loadFiles($event, loadForm)">
+  <div class="wrapper">
+    <mat-form-field>
+      <textarea matInput name="old-version" placeholder="Write an old version of text" ngModel required></textarea>
+    </mat-form-field>
+    <mat-form-field>
+      <textarea matInput name="new-version" placeholder="Write a new version of text" ngModel required></textarea>
+    </mat-form-field>
+  </div>
+  <button mat-button type="submit" class="view-changes">Watch changes</button>
 </form>

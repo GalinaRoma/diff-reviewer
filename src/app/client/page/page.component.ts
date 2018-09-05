@@ -9,7 +9,7 @@ export class PageComponent implements OnInit {
 
   constructor() { }
 
-  ngOnInit() {
+  public ngOnInit(): void {
   }
 
 }
