@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { NgForm } from '@angular/forms';
+import {Router} from '@angular/router';
 
 import {DiffService} from '../../../core/services/diff.service';
 
@@ -10,7 +11,7 @@ import {DiffService} from '../../../core/services/diff.service';
 })
 export class FileLoaderComponent implements OnInit {
 
-  constructor(private diffService: DiffService) { }
+  constructor(private diffService: DiffService, private router: Router) { }
 
   public ngOnInit(): void {
   }
@@ -21,6 +22,7 @@ export class FileLoaderComponent implements OnInit {
     const newText = form.controls['new-version'].value;
 
     this.diffService.getTextDiff(oldText, newText);
+    this.router.navigateByUrl('diff');
   }
 
 }

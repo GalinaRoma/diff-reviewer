@@ -13,5 +13,6 @@ export class DiffService {
 
   public getTextDiff(lastText: string, newText: string): void {
     this.diff = this.dmp.diff_main(lastText, newText);
+    console.log(this.diff);
   }
 }

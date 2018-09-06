@@ -1,0 +1,15 @@
+.table {
+  border: 1px solid;
+  border-collapse: collapse;
+  width: 90%;
+  margin: 10px auto;
+}
+.row-number {
+  width: 30px;
+  border-right: 1px solid;
+  text-align: right;
+}
+.comment-column {
+  border-left: 1px solid;
+  width: 300px;
+}
