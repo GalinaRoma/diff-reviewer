@@ -1,12 +1,14 @@
-<table class="table">
-  <tr>
-    <td class="cell row-number">1</td>
-    <td>text</td>
-    <td class="comment-column">comment1</td>
-  </tr>
-  <tr>
-    <td class="cell row-number">2</td>
-    <td>text</td>
-    <td class="comment-column"></td>
-  </tr>
-</table>
+<mat-table [dataSource]="table" class="table">
+  <ng-container matColumnDef="rowNumber">
+    <th mat-header-cell *matHeaderCellDef> No. </th>
+    <td mat-cell *matCellDef="let element"> {{element.rowNumber}} </td>
+  </ng-container>
+
+  <ng-container matColumnDef="text">
+    <th mat-header-cell *matHeaderCellDef> Text </th>
+    <td mat-cell *matCellDef="let element"> {{element.text}} </td>
+  </ng-container>
+  <tr mat-header-row *matHeaderRowDef="['rowNumber', 'text']"></tr>
+
+  <tr mat-row *matRowDef="let row; columns: ['rowNumber', 'text']">{{row}}</tr>
+</mat-table>

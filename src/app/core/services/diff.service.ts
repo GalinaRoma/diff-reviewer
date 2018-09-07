@@ -6,13 +6,16 @@ import {diff_match_patch} from 'diff-match-patch';
 })
 export class DiffService {
   private dmp;
-  public diff;
+  private diff;
   constructor() {
     this.dmp = new diff_match_patch();
   }
 
-  public getTextDiff(lastText: string, newText: string): void {
+  public setDiff(lastText: string, newText: string): void {
     this.diff = this.dmp.diff_main(lastText, newText);
-    console.log(this.diff);
+  }
+
+  public getDiff(): [[number, string]] {
+    return this.diff;
   }
 }

@@ -21,8 +21,10 @@ export class FileLoaderComponent implements OnInit {
     const oldText = form.controls['old-version'].value;
     const newText = form.controls['new-version'].value;
 
-    this.diffService.getTextDiff(oldText, newText);
+    this.diffService.setDiff(oldText, newText);
     this.router.navigateByUrl('diff');
   }
-
+  click(event){
+    console.log(event);
+  }
 }
