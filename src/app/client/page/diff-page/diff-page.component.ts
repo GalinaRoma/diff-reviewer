@@ -10,7 +10,8 @@ import {DiffService} from '../../../core/services/diff.service';
 export class DiffPageComponent implements OnInit {
   public table = [];
 
-  constructor(private diffService: DiffService) {}
+  constructor(private diffService: DiffService) {
+  }
 
   public ngOnInit(): void {
     this.processDiff();
@@ -19,37 +20,86 @@ export class DiffPageComponent implements OnInit {
   public processDiff(): void {
     let oldRows = [];
     let newRows = [];
-    let oldRow;
-    let newRow;
+    let currentOldRow = 1;
+    let currentNewRow = 1;
     const diff = this.diffService.getDiff();
-    console.log(diff);
-    diff.forEach(([action, text]) => {
+    diff.forEach((currentValue, index) => {
+      const [action, text] = currentValue;
+      const currentLines = text.split('\n');
       switch (action) {
         case -1:
-          const oldLines = text.split('\n');
-          oldRow = oldLines.join('\n');
-          oldRows.push(oldRow);
+          if (currentLines.length !== 1) {
+            oldRows.push(currentLines.splice(0, 1));
+            const oldRow = oldRows.join('');
+            this.table.push({oldRowNumber: currentOldRow, text: oldRow});
+            oldRows = [];
+            currentOldRow += 1;
+            if (index !== diff.length - 1) {
+              currentLines.splice(currentLines.length - 1, 1);
+            }
+            currentLines.forEach(line => {
+              this.table.push({oldRowNumber: currentOldRow, text: line});
+              currentOldRow += 1;
+            });
+            break;
+          }
+          oldRows.push(currentLines[0]);
           break;
         case 1:
-          const newLines = text.split('\n');
-          newRow = newLines.join('\n');
-          newRows.push(newRow);
+          if (currentLines.length !== 1) {
+            newRows.push(currentLines.splice(0, 1));
+            const newRow = newRows.join('');
+            this.table.push({oldRowNumber: currentOldRow, newRowNumber: currentNewRow, text: newRow});
+            newRows = [];
+            currentNewRow += 1;
+            if (index !== diff.length - 1) {
+              currentLines.splice(currentLines.length - 1, 1);
+            }
+            currentLines.forEach(line => {
+              this.table.push({oldRowNumber: currentOldRow, newRowNumber: currentNewRow, text: line});
+              currentNewRow += 1;
+            });
+            break;
+          }
+          newRows.push(currentLines[0]);
           break;
         case 0:
-          const commonLines = text.split('\n');
-          const commonRows = commonLines.join('\n');
-          oldRows.push(commonRows);
-          newRows.push(commonRows);
+          if (currentLines.length !== 1) {
+            const previousLinePart = currentLines.splice(0, 1)[0];
+            oldRows.push(previousLinePart);
+            newRows.push(previousLinePart);
+            const oldRow = oldRows.join('');
+            const newRow = newRows.join('');
+            if (oldRow !== newRow) {
+              this.table.push({oldRowNumber: currentOldRow, newRowNumber: currentNewRow, text: oldRow});
+            }
+            this.table.push({oldRowNumber: currentOldRow, newRowNumber: currentNewRow, text: newRow});
+            oldRows = [];
+            currentOldRow += 1;
+            newRows = [];
+            currentNewRow += 1;
+            if (index !== diff.length - 1) {
+              currentLines.splice(currentLines.length - 1, 1);
+            }
+            currentLines.forEach(line => {
+              this.table.push({oldRowNumber: currentOldRow, newRowNumber: currentNewRow, text: line});
+              currentOldRow += 1;
+              currentNewRow += 1;
+            });
+            break;
+          }
+          oldRows.push(currentLines[0]);
+          newRows.push(currentLines[0]);
           break;
       }
     });
-    this.displaySomeText(oldRows);
-    this.displaySomeText(newRows);
-  }
-
-  public displaySomeText(textArray: string[]): void {
-    const textRow = textArray.join('');
-
-    this.table.push({rowNumber: 1,  text: textRow});
+    if (oldRows.length !== 0) {
+      const oldRow = oldRows.join('');
+      this.table.push({oldRowNumber: currentOldRow, newRowNumber: currentNewRow, text: oldRow});
+    }
+    if (newRows.length !== 0) {
+      const newRow = newRows.join('');
+      this.table.push({oldRowNumber: currentOldRow, newRowNumber: currentNewRow, text: newRow});
+    }
   }
 }
