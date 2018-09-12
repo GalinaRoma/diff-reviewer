@@ -1,0 +1,19 @@
+<table mat-table [dataSource]="table" class="table">
+  <ng-container matColumnDef="oldRowNumber">
+    <td class="row-number" mat-cell *matCellDef="let element"> {{element.oldRowNumber}} </td>
+  </ng-container>
+
+  <ng-container matColumnDef="newRowNumber">
+    <td class="row-number" mat-cell *matCellDef="let element"> {{element.newRowNumber}} </td>
+  </ng-container>
+
+  <ng-container matColumnDef="text">
+    <td class="text" mat-cell *matCellDef="let element"> {{element.text}} </td>
+  </ng-container>
+
+  <ng-container matColumnDef="comment">
+    <td class="comment" mat-cell *matCellDef="let element"> {{element.comment}} </td>
+  </ng-container>
+
+  <tr mat-row *matRowDef="let row; columns: ['oldRowNumber', 'newRowNumber', 'text', 'comment']">{{row}}</tr>
+</table>
