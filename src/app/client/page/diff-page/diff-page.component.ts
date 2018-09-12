@@ -17,89 +17,80 @@ export class DiffPageComponent implements OnInit {
     this.processDiff();
   }
 
-  public processDiff(): void {
+  private processMultilineText(currentLines: string[], rowsToNextDisplay: string[], rowNumberName: string, rowNumber: number): any[] {
+    let partOfNextLine = currentLines.slice(0, 1)[0];
+    if (currentLines.length !== 1) {
+      const partOfPrevLine = currentLines.shift();
+      rowsToNextDisplay.push(partOfPrevLine);
+      const row = {text: rowsToNextDisplay.join('')};
+      row[rowNumberName] = rowNumber;
+      this.table.push(row);
+      rowsToNextDisplay = [];
+      rowNumber++;
+
+      partOfNextLine = currentLines.pop();
+      currentLines.forEach(line => {
+        this.table.push({oldRowNumber: rowNumber, text: line});
+        rowNumber++;
+      });
+    }
+    rowsToNextDisplay.push(partOfNextLine);
+
+    return [rowNumber, rowsToNextDisplay];
+  }
+
+  private transformPrevRowArraysToTable(oldRows: string[], newRows: string[], currentOldRow: number, currentNewRow: number): any[] {
+    const oldLine = oldRows.join('');
+    const newLine = newRows.join('');
+    if (oldLine !== newLine) {
+      this.table.push({oldRowNumber: currentOldRow, newRowNumber: currentNewRow, text: oldLine});
+    }
+    this.table.push({oldRowNumber: currentOldRow, newRowNumber: currentNewRow, text: newLine});
+    oldRows = [];
+    newRows = [];
+    currentOldRow += 1;
+    currentNewRow += 1;
+
+    return [currentOldRow, currentNewRow, oldRows, newRows];
+  }
+
+  private processDiff(): void {
     let oldRows = [];
     let newRows = [];
     let currentOldRow = 1;
     let currentNewRow = 1;
     const diff = this.diffService.getDiff();
-    diff.forEach((currentValue, index) => {
+    diff.forEach(currentValue => {
       const [action, text] = currentValue;
       const currentLines = text.split('\n');
       switch (action) {
         case -1:
-          if (currentLines.length !== 1) {
-            oldRows.push(currentLines.splice(0, 1));
-            const oldRow = oldRows.join('');
-            this.table.push({oldRowNumber: currentOldRow, text: oldRow});
-            oldRows = [];
-            currentOldRow += 1;
-            if (index !== diff.length - 1) {
-              currentLines.splice(currentLines.length - 1, 1);
-            }
-            currentLines.forEach(line => {
-              this.table.push({oldRowNumber: currentOldRow, text: line});
-              currentOldRow += 1;
-            });
-            break;
-          }
-          oldRows.push(currentLines[0]);
+          [currentOldRow, oldRows] = this.processMultilineText(currentLines, oldRows, 'oldRowNumber', currentOldRow);
           break;
         case 1:
-          if (currentLines.length !== 1) {
-            newRows.push(currentLines.splice(0, 1));
-            const newRow = newRows.join('');
-            this.table.push({oldRowNumber: currentOldRow, newRowNumber: currentNewRow, text: newRow});
-            newRows = [];
-            currentNewRow += 1;
-            if (index !== diff.length - 1) {
-              currentLines.splice(currentLines.length - 1, 1);
-            }
-            currentLines.forEach(line => {
-              this.table.push({oldRowNumber: currentOldRow, newRowNumber: currentNewRow, text: line});
-              currentNewRow += 1;
-            });
-            break;
-          }
-          newRows.push(currentLines[0]);
+          [currentNewRow, newRows] = this.processMultilineText(currentLines, newRows, 'newRowNumber', currentNewRow);
           break;
         case 0:
+          let partOfNextLine = currentLines.slice(0, 1)[0];
           if (currentLines.length !== 1) {
-            const previousLinePart = currentLines.splice(0, 1)[0];
+            const previousLinePart = currentLines.shift();
             oldRows.push(previousLinePart);
             newRows.push(previousLinePart);
-            const oldRow = oldRows.join('');
-            const newRow = newRows.join('');
-            if (oldRow !== newRow) {
-              this.table.push({oldRowNumber: currentOldRow, newRowNumber: currentNewRow, text: oldRow});
-            }
-            this.table.push({oldRowNumber: currentOldRow, newRowNumber: currentNewRow, text: newRow});
-            oldRows = [];
-            currentOldRow += 1;
-            newRows = [];
-            currentNewRow += 1;
-            if (index !== diff.length - 1) {
-              currentLines.splice(currentLines.length - 1, 1);
-            }
+            [currentOldRow, currentNewRow, oldRows, newRows] =
+              this.transformPrevRowArraysToTable(oldRows, newRows, currentOldRow, currentNewRow);
+
+            partOfNextLine = currentLines.pop();
             currentLines.forEach(line => {
               this.table.push({oldRowNumber: currentOldRow, newRowNumber: currentNewRow, text: line});
               currentOldRow += 1;
               currentNewRow += 1;
             });
-            break;
           }
-          oldRows.push(currentLines[0]);
-          newRows.push(currentLines[0]);
+          oldRows.push(partOfNextLine);
+          newRows.push(partOfNextLine);
           break;
       }
     });
-    if (oldRows.length !== 0) {
-      const oldRow = oldRows.join('');
-      this.table.push({oldRowNumber: currentOldRow, newRowNumber: currentNewRow, text: oldRow});
-    }
-    if (newRows.length !== 0) {
-      const newRow = newRows.join('');
-      this.table.push({oldRowNumber: currentOldRow, newRowNumber: currentNewRow, text: newRow});
-    }
+    this.transformPrevRowArraysToTable(oldRows, newRows, currentOldRow, currentNewRow);
   }
 }
