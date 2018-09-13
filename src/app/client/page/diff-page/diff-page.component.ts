@@ -9,6 +9,9 @@ import {DiffService} from '../../../core/services/diff.service';
 })
 export class DiffPageComponent implements OnInit {
   public table = [];
+  public oldTexts = [];
+  public newTexts = [];
+  public rowIdCounter = 1;
 
   constructor(private diffService: DiffService) {
   }
@@ -17,22 +20,28 @@ export class DiffPageComponent implements OnInit {
     this.processDiff();
   }
 
+  private addRowToTable(text: string, rowNumberName: string, rowNumber: number): number {
+    const row = {text: text, id: this.rowIdCounter};
+    row[rowNumberName] = rowNumber;
+    this.table.push(row);
+    rowNumberName === 'oldRowNumber' ? this.oldTexts.push(this.rowIdCounter) : this.newTexts.push(this.rowIdCounter);
+    this.rowIdCounter++;
+    rowNumber++;
+
+    return rowNumber;
+  }
+
   private processMultilineText(currentLines: string[], rowsToNextDisplay: string[], rowNumberName: string, rowNumber: number): any[] {
     let partOfNextLine = currentLines.slice(0, 1)[0];
     if (currentLines.length !== 1) {
       const partOfPrevLine = currentLines.shift();
       rowsToNextDisplay.push(partOfPrevLine);
-      const row = {text: rowsToNextDisplay.join('')};
-      row[rowNumberName] = rowNumber;
-      this.table.push(row);
+      const rowText = rowsToNextDisplay.join('');
+      rowNumber = this.addRowToTable(rowText, rowNumberName, rowNumber);
       rowsToNextDisplay = [];
-      rowNumber++;
 
       partOfNextLine = currentLines.pop();
-      currentLines.forEach(line => {
-        this.table.push({oldRowNumber: rowNumber, text: line});
-        rowNumber++;
-      });
+      currentLines.forEach(line => rowNumber = this.addRowToTable(line, rowNumberName, rowNumber));
     }
     rowsToNextDisplay.push(partOfNextLine);
 
@@ -43,15 +52,27 @@ export class DiffPageComponent implements OnInit {
     const oldLine = oldRows.join('');
     const newLine = newRows.join('');
     if (oldLine !== newLine) {
-      this.table.push({oldRowNumber: currentOldRow, newRowNumber: currentNewRow, text: oldLine});
+      this.table.push({oldRowNumber: currentOldRow, newRowNumber: currentNewRow, text: oldLine, id: this.rowIdCounter});
+      this.oldTexts.push(this.rowIdCounter);
+      this.rowIdCounter++;
+      this.newTexts.push(this.rowIdCounter);
     }
-    this.table.push({oldRowNumber: currentOldRow, newRowNumber: currentNewRow, text: newLine});
+    this.table.push({oldRowNumber: currentOldRow, newRowNumber: currentNewRow, text: newLine, id: this.rowIdCounter});
+    this.rowIdCounter++;
     oldRows = [];
     newRows = [];
     currentOldRow += 1;
     currentNewRow += 1;
 
     return [currentOldRow, currentNewRow, oldRows, newRows];
+  }
+
+  public isOldRow(rowId: number): boolean {
+    return this.oldTexts.includes(rowId);
+  }
+
+  public isNewRow(rowId: number): boolean {
+    return this.newTexts.includes(rowId);
   }
 
   private processDiff(): void {
@@ -81,9 +102,10 @@ export class DiffPageComponent implements OnInit {
 
             partOfNextLine = currentLines.pop();
             currentLines.forEach(line => {
-              this.table.push({oldRowNumber: currentOldRow, newRowNumber: currentNewRow, text: line});
+              this.table.push({oldRowNumber: currentOldRow, newRowNumber: currentNewRow, text: line, id: this.rowIdCounter});
               currentOldRow += 1;
               currentNewRow += 1;
+              this.rowIdCounter++;
             });
           }
           oldRows.push(partOfNextLine);

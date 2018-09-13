@@ -1,1 +1,8 @@
 @import "~@angular/material/prebuilt-themes/indigo-pink.css";
+.old-text {
+  background: rgba(200, 24, 19, 0.37);
+}
+.new-text {
+  background: rgba(9, 200, 43, 0.46);
+}
+
