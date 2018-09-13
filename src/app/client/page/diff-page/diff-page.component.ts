@@ -52,12 +52,14 @@ export class DiffPageComponent implements OnInit {
     const oldLine = oldRows.join('');
     const newLine = newRows.join('');
     if (oldLine !== newLine) {
-      this.table.push({oldRowNumber: currentOldRow, newRowNumber: currentNewRow, text: oldLine, id: this.rowIdCounter});
+      this.table.push({oldRowNumber: currentOldRow, text: oldLine, id: this.rowIdCounter});
       this.oldTexts.push(this.rowIdCounter);
       this.rowIdCounter++;
       this.newTexts.push(this.rowIdCounter);
+      this.table.push({newRowNumber: currentNewRow, text: newLine, id: this.rowIdCounter});
+    } else {
+      this.table.push({oldRowNumber: currentOldRow, newRowNumber: currentNewRow, text: newLine, id: this.rowIdCounter});
     }
-    this.table.push({oldRowNumber: currentOldRow, newRowNumber: currentNewRow, text: newLine, id: this.rowIdCounter});
     this.rowIdCounter++;
     oldRows = [];
     newRows = [];
