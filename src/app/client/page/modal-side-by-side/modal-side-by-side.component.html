@@ -1,23 +1,23 @@
 <button class="icon-button close-button" mat-dialog-close><i class="far fa-window-close"></i></button>
 <div class="table-wrapper">
-  <table mat-table [dataSource]="oldVersion" class="table">
+  <table mat-table [dataSource]="oldVersionText" class="table">
     <ng-container matColumnDef="rowNumber">
       <td class="row-number" mat-cell *matCellDef="let element"> {{element.rowNumber}} </td>
     </ng-container>
 
     <ng-container matColumnDef="text">
-      <td class="text" mat-cell *matCellDef="let element" [class.old-text]="isOldRow(element.id)"> {{element.text}} </td>
+      <td class="text" mat-cell *matCellDef="let element" [class.old-text]="diffService.isOldRow(element.id)"> {{element.text}} </td>
     </ng-container>
 
     <tr class="row" mat-row *matRowDef="let row; columns: ['rowNumber', 'text']">{{row}}</tr>
   </table>
-  <table mat-table [dataSource]="newVersion" class="table">
+  <table mat-table [dataSource]="newVersionText" class="table">
     <ng-container matColumnDef="rowNumber">
       <td class="row-number" mat-cell *matCellDef="let element"> {{element.rowNumber}} </td>
     </ng-container>
 
     <ng-container matColumnDef="text">
-      <td class="text" mat-cell *matCellDef="let element" [class.new-text]="isNewRow(element.id)"> {{element.text}} </td>
+      <td class="text" mat-cell *matCellDef="let element" [class.new-text]="diffService.isNewRow(element.id)"> {{element.text}} </td>
     </ng-container>
 
     <tr class="row" mat-row *matRowDef="let row; columns: ['rowNumber', 'text']">{{row}}</tr>
