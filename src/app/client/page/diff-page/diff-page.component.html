@@ -1,4 +1,4 @@
-<button mat-button color="primary" type="button">Side-by-side diff</button>
+<button mat-button color="primary" type="button" (click)="openModal()">Side-by-side diff</button>
 <table mat-table [dataSource]="table" class="table">
   <ng-container matColumnDef="oldRowNumber">
     <td class="row-number" mat-cell *matCellDef="let element"> {{element.oldRowNumber}} </td>
@@ -17,5 +17,5 @@
     <td class="comment" mat-cell *matCellDef="let element"> {{element.comment}} </td>
   </ng-container>
 
-  <tr mat-row *matRowDef="let row; columns: ['oldRowNumber', 'newRowNumber', 'text', 'comment']">{{row}}</tr>
+  <tr class="row" mat-row *matRowDef="let row; columns: ['oldRowNumber', 'newRowNumber', 'text', 'comment']">{{row}}</tr>
 </table>

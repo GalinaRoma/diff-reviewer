@@ -5,4 +5,14 @@
 .new-text {
   background: rgba(9, 200, 43, 0.46);
 }
-
+.row {
+  height: 20px;
+}
+.text {
+  padding: 4px;
+}
+.row-number {
+  width: 24px;
+  text-align: center;
+  border-right: 1px solid #c8c8c8;
+}

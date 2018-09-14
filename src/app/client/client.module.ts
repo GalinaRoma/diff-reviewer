@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import {FormsModule} from '@angular/forms';
-import {MatButtonModule, MatFormFieldModule, MatInputModule, MatTableModule} from '@angular/material';
+import {MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatTableModule} from '@angular/material';
 import {RouterModule} from '@angular/router';
 
 import { DiffPageComponent } from './page/diff-page/diff-page.component';
@@ -18,6 +18,7 @@ import { PageComponent } from './page/page.component';
     MatInputModule,
     MatButtonModule,
     MatTableModule,
+    MatDialogModule,
   ],
   declarations: [PageComponent, FileLoaderComponent, DiffPageComponent, ModalSideBySideComponent],
   exports: [PageComponent],

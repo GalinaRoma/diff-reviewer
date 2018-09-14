@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
+import { MatDialog } from '@angular/material';
 
-import {DiffService} from '../../../core/services/diff.service';
+import { DiffService } from '../../../core/services/diff.service';
+import { ModalSideBySideComponent } from '../modal-side-by-side/modal-side-by-side.component';
 
 @Component({
   selector: 'app-diff-page',
@@ -12,8 +14,17 @@ export class DiffPageComponent implements OnInit {
   public oldTexts = [];
   public newTexts = [];
   public rowIdCounter = 1;
+  public diff = [];
 
-  constructor(private diffService: DiffService) {
+  constructor(private diffService: DiffService, public dialog: MatDialog) {
+  }
+
+  public openModal(): void {
+    this.dialog.open(ModalSideBySideComponent,{
+      width: '98%',
+      height: '96%',
+      data: { diff: this.diff },
+    });
   }
 
   public ngOnInit(): void {
@@ -69,21 +80,13 @@ export class DiffPageComponent implements OnInit {
     return [currentOldRow, currentNewRow, oldRows, newRows];
   }
 
-  public isOldRow(rowId: number): boolean {
-    return this.oldTexts.includes(rowId);
-  }
-
-  public isNewRow(rowId: number): boolean {
-    return this.newTexts.includes(rowId);
-  }
-
   private processDiff(): void {
     let oldRows = [];
     let newRows = [];
     let currentOldRow = 1;
     let currentNewRow = 1;
-    const diff = this.diffService.getDiff();
-    diff.forEach(currentValue => {
+    this.diff = this.diffService.getDiff();
+    this.diff.forEach(currentValue => {
       const [action, text] = currentValue;
       const currentLines = text.split('\n');
       switch (action) {
@@ -116,5 +119,13 @@ export class DiffPageComponent implements OnInit {
       }
     });
     this.transformPrevRowArraysToTable(oldRows, newRows, currentOldRow, currentNewRow);
+  }
+
+  public isOldRow(rowId: number): boolean {
+    return this.oldTexts.includes(rowId);
+  }
+
+  public isNewRow(rowId: number): boolean {
+    return this.newTexts.includes(rowId);
   }
 }

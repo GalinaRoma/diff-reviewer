@@ -2,14 +2,6 @@
   width: 96%;
   margin: 10px auto;
 }
-.text {
-  padding: 4px;
-}
-.row-number {
-  width: 24px;
-  text-align: center;
-  border-right: 1px solid #c8c8c8;
-}
 .comment {
   width: 300px;
   border-left: 1px solid #c8c8c8;

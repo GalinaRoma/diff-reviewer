@@ -1,0 +1,17 @@
+.icon-button {
+  border: 0;
+  background: #fff;
+}
+.close-button {
+  float: right;
+  font-size: 30px;
+  color: #c8c8c8;
+}
+.table-wrapper {
+  clear: right;
+  display: flex;
+  justify-content: space-around;
+}
+.table {
+  width: 48%;
+}
