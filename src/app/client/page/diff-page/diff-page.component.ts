@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material';
 
+import { Row } from '../../../core/models/row';
 import { DiffService } from '../../../core/services/diff.service';
 import { ModalSideBySideComponent } from '../modal-side-by-side/modal-side-by-side.component';
+import {CommonRow} from '../../../core/models/common-row';
 
 @Component({
   selector: 'app-diff-page',
@@ -16,7 +18,7 @@ export class DiffPageComponent implements OnInit {
   }
 
   public openModal(): void {
-    const dialogRef = this.dialog.open(ModalSideBySideComponent, {
+    this.dialog.open(ModalSideBySideComponent, {
       width: '98%',
       height: '96%',
     });
@@ -30,7 +32,7 @@ export class DiffPageComponent implements OnInit {
     this.createDiffTable(oldVersionText, newVersionText);
   }
 
-  public createDiffTable(oldText: any[], newText: any[]): void {
+  public createDiffTable(oldText: Row[], newText: Row[]): void {
     let oldTextPointer = 0;
     let newTextPointer = 0;
     const rowsCount = oldText.length + newText.length;
@@ -39,26 +41,26 @@ export class DiffPageComponent implements OnInit {
       const newRow = newText[newTextPointer];
       if (newText.length !== newTextPointer && oldText.length !== oldTextPointer) {
         if (oldRow.text === newRow.text) {
-          this.table.push({oldRowNumber: oldRow.rowNumber, newRowNumber: newRow.rowNumber, text: oldRow.text, id: oldRow.id});
+          this.table.push(new CommonRow(oldRow.id, oldRow.text, oldRow.rowNumber, newRow.rowNumber));
           oldTextPointer++;
           newTextPointer++;
           continue;
         }
         if (oldRow.id < newRow.id) {
-          this.table.push({oldRowNumber: oldRow.rowNumber, text: oldRow.text, id: oldRow.id});
+          this.table.push(new CommonRow(oldRow.id, oldRow.text, oldRow.rowNumber, null));
           oldTextPointer++;
         } else {
-          this.table.push({newRowNumber: newRow.rowNumber, text: newRow.text, id: newRow.id});
+          this.table.push(new CommonRow(newRow.id, newRow.text, null, newRow.rowNumber));
           newTextPointer++;
         }
       } else {
         if (oldTextPointer === oldText.length && newTextPointer !== newText.length) {
-          this.table.push({newRowNumber: newRow.rowNumber, text: newRow.text, id: newRow.id});
+          this.table.push(new CommonRow(newRow.id, newRow.text, null, newRow.rowNumber));
           newTextPointer++;
           continue;
         }
         if (oldTextPointer !== oldText.length && newTextPointer === newText.length) {
-          this.table.push({oldRowNumber: oldRow.rowNumber, text: oldRow.text, id: oldRow.id});
+          this.table.push(new CommonRow(oldRow.id, oldRow.text, oldRow.rowNumber, null));
           oldTextPointer++;
         }
       }
