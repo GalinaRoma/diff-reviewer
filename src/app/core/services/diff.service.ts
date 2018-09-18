@@ -31,10 +31,8 @@ export class DiffService {
   private addRowToTable(row: Row, rowType: RowType): number {
     if (rowType === RowType.oldRow) {
       this.oldVersionText.push(row);
-      this.oldRowIds.push(row.id);
     } else {
       this.newVersionText.push(row);
-      this.newRowIds.push(row.id);
     }
     this.rowIdCounter++;
     const nextRowNumber = row.rowNumber + 1;
@@ -49,11 +47,11 @@ export class DiffService {
       const partOfPrevLine = currentLines.shift();
       rowsToNextDisplay.push(partOfPrevLine);
       const rowText = rowsToNextDisplay.join('');
-      rowNumber = this.addRowToTable(new Row(this.rowIdCounter, rowText, rowNumber), rowType);
+      rowNumber = this.addRowToTable(new Row(this.rowIdCounter, rowText, rowNumber, true), rowType);
       rowsToNextDisplay = [];
 
       partOfNextLine = currentLines.pop();
-      currentLines.forEach(line => rowNumber = this.addRowToTable(new Row(this.rowIdCounter, line, rowNumber), rowType));
+      currentLines.forEach(line => rowNumber = this.addRowToTable(new Row(this.rowIdCounter, line, rowNumber, true), rowType));
     }
     rowsToNextDisplay.push(partOfNextLine);
 
@@ -65,11 +63,9 @@ export class DiffService {
     const oldLine = oldRows.join('');
     const newLine = newRows.join('');
     if (oldLine !== newLine) {
-      this.oldVersionText.push(new Row(this.rowIdCounter, oldLine, currentOldRow));
-      this.oldRowIds.push(this.rowIdCounter);
+      this.oldVersionText.push(new Row(this.rowIdCounter, oldLine, currentOldRow, true));
       this.rowIdCounter++;
-      this.newRowIds.push(this.rowIdCounter);
-      this.newVersionText.push(new Row(this.rowIdCounter, newLine, currentNewRow));
+      this.newVersionText.push(new Row(this.rowIdCounter, newLine, currentNewRow, true));
     } else {
       this.oldVersionText.push(new Row(this.rowIdCounter, oldLine, currentOldRow));
       this.rowIdCounter++;
@@ -132,6 +128,10 @@ export class DiffService {
       }
     });
     [currentOldRow, currentNewRow, oldRows, newRows] = this.transformPrevRowArraysToTable(oldRows, newRows, currentOldRow, currentNewRow);
+    const transformedTexts = this.transformDiffTables(this.oldVersionText, this.newVersionText);
+    this.oldVersionText = transformedTexts.oldTextVersion;
+    this.newVersionText = transformedTexts.newTextVersion;
+    this.selectChangedRows(this.oldVersionText, this.newVersionText);
 
     return { oldVersionText: this.oldVersionText, newVersionText: this.newVersionText };
   }
@@ -142,5 +142,69 @@ export class DiffService {
 
   public isNewRow(rowId: number): boolean {
     return this.newRowIds.includes(rowId);
+  }
+
+  public selectChangedRows(oldText: Row[], newText: Row[]): void {
+    const rowsCount = oldText.length;
+    for (let i = 0; i < rowsCount; i++) {
+      const oldRow = oldText[i];
+      const newRow = newText[i];
+      if (oldRow.text === newRow.text && !oldRow.changed && !newRow.changed) {
+        continue;
+      }
+      if (oldRow.changed) {
+        this.oldRowIds.push(oldRow.id);
+      }
+      if (newRow.changed) {
+        this.newRowIds.push(newRow.id);
+      }
+    }
+  }
+
+  public transformDiffTables(oldText: Row[], newText: Row[]): {oldTextVersion: Row[], newTextVersion: Row[]} {
+    let oldTextPointer = 0;
+    let newTextPointer = 0;
+    const oldVersionText = [];
+    const newVersionText = [];
+    const rowsCount = oldText.length + newText.length;
+    for (let i = 0; i < rowsCount; i++) {
+      const oldRow = oldText[oldTextPointer];
+      const newRow = newText[newTextPointer];
+      if (newText.length !== newTextPointer && oldText.length !== oldTextPointer) {
+        if (oldRow.text === newRow.text) {
+          oldVersionText.push(oldRow);
+          newVersionText.push(newRow);
+          oldTextPointer++;
+          newTextPointer++;
+          continue;
+        }
+        if (oldRow.id < newRow.id) {
+          oldVersionText.push(oldRow);
+          oldTextPointer++;
+          if (oldRow.changed && !newRow.changed) {
+            newVersionText.push(new Row(null, '', null));
+          }
+        } else {
+          newVersionText.push(newRow);
+          newTextPointer++;
+          if (newRow.changed && !oldRow.changed) {
+            oldVersionText.push(new Row(null, '', null));
+          }
+        }
+      } else {
+        if (oldTextPointer === oldText.length && newTextPointer !== newText.length) {
+          newVersionText.push(newRow);
+          newTextPointer++;
+          oldVersionText.push(new Row(null, '', null));
+          continue;
+        }
+        if (oldTextPointer !== oldText.length && newTextPointer === newText.length) {
+          oldVersionText.push(oldRow);
+          oldTextPointer++;
+          newVersionText.push(new Row(null, '', null));
+        }
+      }
+    }
+    return {oldTextVersion: oldVersionText, newTextVersion: newVersionText};
   }
 }

@@ -27,6 +27,7 @@ export class DiffPageComponent implements OnInit {
   public ngOnInit(): void {
     const diff = this.diffService.getDiff();
     const transformedDiff = this.diffService.processDiff(diff);
+    console.log(transformedDiff);
     const oldVersionText = transformedDiff.oldVersionText;
     const newVersionText = transformedDiff.newVersionText;
     this.createDiffTable(oldVersionText, newVersionText);
@@ -40,6 +41,14 @@ export class DiffPageComponent implements OnInit {
       const oldRow = oldText[oldTextPointer];
       const newRow = newText[newTextPointer];
       if (newText.length !== newTextPointer && oldText.length !== oldTextPointer) {
+        if (!oldRow.id) {
+          oldTextPointer++;
+          continue;
+        }
+        if (!newRow.id) {
+          newTextPointer++;
+          continue;
+        }
         if (oldRow.text === newRow.text) {
           this.table.push(new CommonRow(oldRow.id, oldRow.text, oldRow.rowNumber, newRow.rowNumber));
           oldTextPointer++;
