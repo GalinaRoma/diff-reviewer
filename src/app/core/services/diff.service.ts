@@ -47,7 +47,8 @@ export class DiffService {
       const partOfPrevLine = currentLines.shift();
       rowsToNextDisplay.push(partOfPrevLine);
       const rowText = rowsToNextDisplay.join('');
-      rowNumber = this.addRowToTable(new Row(this.rowIdCounter, rowText, rowNumber, true), rowType);
+      rowNumber = this.addRowToTable(new Row(this.rowIdCounter, rowText, rowNumber,
+        rowsToNextDisplay.length !== 1 || partOfPrevLine !== ''), rowType);
       rowsToNextDisplay = [];
 
       partOfNextLine = currentLines.pop();
@@ -94,6 +95,7 @@ export class DiffService {
     let newRows = [];
     let currentOldRow = 1;
     let currentNewRow = 1;
+    console.log(diff);
     diff.forEach(currentValue => {
       const [action, text] = currentValue;
       const currentLines = text.split('\n');
@@ -146,6 +148,8 @@ export class DiffService {
 
   public selectChangedRows(oldText: Row[], newText: Row[]): void {
     const rowsCount = oldText.length;
+    console.log(oldText);
+    console.log(newText);
     for (let i = 0; i < rowsCount; i++) {
       const oldRow = oldText[i];
       const newRow = newText[i];
@@ -181,13 +185,13 @@ export class DiffService {
         if (oldRow.id < newRow.id) {
           oldVersionText.push(oldRow);
           oldTextPointer++;
-          if (oldRow.changed && !newRow.changed) {
+          if (oldRow.changed) {
             newVersionText.push(new Row(null, '', null));
           }
         } else {
           newVersionText.push(newRow);
           newTextPointer++;
-          if (newRow.changed && !oldRow.changed) {
+          if (newRow.changed) {
             oldVersionText.push(new Row(null, '', null));
           }
         }
