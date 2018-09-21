@@ -3,6 +3,8 @@ import {diff_match_patch} from 'diff-match-patch';
 
 import {Row} from '../models/row';
 import {RowType} from '../models/row-type.enum';
+import {Action} from '../models/action.enum';
+import {InputRow} from '../models/input-row';
 
 @Injectable({
   providedIn: 'root',
@@ -40,38 +42,35 @@ export class DiffService {
     return nextRowNumber;
   }
 
-  private processMultilineText(currentLines: string[], rowsToNextDisplay: string[], rowType: RowType, rowNumber: number):
-    [number, string[]] {
+  private processMultilineText(currentLines: string[], rowsToNextDisplay: InputRow[], rowType: RowType, rowNumber: number):
+    [number, InputRow[]] {
     let partOfNextLine = currentLines.slice(0, 1)[0];
+    const action = rowType === RowType.oldRow ? Action.delete : Action.add;
     if (currentLines.length !== 1) {
       const partOfPrevLine = currentLines.shift();
-      rowsToNextDisplay.push(partOfPrevLine);
-      const rowText = rowsToNextDisplay.join('');
+      rowsToNextDisplay.push(new InputRow(action, partOfPrevLine));
+      const rowText = rowsToNextDisplay.map(elem => elem.text).join('');
       rowNumber = this.addRowToTable(new Row(this.rowIdCounter, rowText, rowNumber,
-        rowsToNextDisplay.length !== 1 || partOfPrevLine !== ''), rowType);
+        !(rowsToNextDisplay.slice(0, 1)[0].action === Action.notChanged && partOfPrevLine === '')), rowType);
       rowsToNextDisplay = [];
 
       partOfNextLine = currentLines.pop();
       currentLines.forEach(line => rowNumber = this.addRowToTable(new Row(this.rowIdCounter, line, rowNumber, true), rowType));
     }
-    rowsToNextDisplay.push(partOfNextLine);
+    rowsToNextDisplay.push(new InputRow(action, partOfNextLine));
 
     return [rowNumber, rowsToNextDisplay];
   }
 
-  private transformPrevRowArraysToTable(oldRows: string[], newRows: string[], currentOldRow: number, currentNewRow: number):
-    [number, number, string[], string[]] {
-    const oldLine = oldRows.join('');
-    const newLine = newRows.join('');
-    if (oldLine !== newLine) {
-      this.oldVersionText.push(new Row(this.rowIdCounter, oldLine, currentOldRow, true));
-      this.rowIdCounter++;
-      this.newVersionText.push(new Row(this.rowIdCounter, newLine, currentNewRow, true));
-    } else {
-      this.oldVersionText.push(new Row(this.rowIdCounter, oldLine, currentOldRow));
-      this.rowIdCounter++;
-      this.newVersionText.push(new Row(this.rowIdCounter, newLine, currentNewRow));
-    }
+  private transformPrevRowArraysToTable(oldRows: InputRow[], newRows: InputRow[], currentOldRow: number, currentNewRow: number):
+    [number, number, InputRow[], InputRow[]] {
+    const oldLine = oldRows.map(elem => elem.text).join('');
+    const newLine = newRows.map(elem => elem.text).join('');
+    this.oldVersionText.push(new Row(this.rowIdCounter, oldLine, currentOldRow,
+      oldRows.slice(oldRows.length - 1, oldRows.length)[0].action !== Action.notChanged));
+    this.rowIdCounter++;
+    this.newVersionText.push(new Row(this.rowIdCounter, newLine, currentNewRow,
+      newRows.slice(newRows.length - 1, newRows.length)[0].action !== Action.notChanged));
     this.rowIdCounter++;
     oldRows = [];
     newRows = [];
@@ -95,7 +94,6 @@ export class DiffService {
     let newRows = [];
     let currentOldRow = 1;
     let currentNewRow = 1;
-    console.log(diff);
     diff.forEach(currentValue => {
       const [action, text] = currentValue;
       const currentLines = text.split('\n');
@@ -108,10 +106,11 @@ export class DiffService {
           break;
         case 0:
           let partOfNextLine = currentLines.slice(0, 1)[0];
+          const currentAction = Action.notChanged;
           if (currentLines.length !== 1) {
             const previousLinePart = currentLines.shift();
-            oldRows.push(previousLinePart);
-            newRows.push(previousLinePart);
+            oldRows.push(new InputRow(currentAction, previousLinePart));
+            newRows.push(new InputRow(currentAction, previousLinePart));
             [currentOldRow, currentNewRow, oldRows, newRows] =
               this.transformPrevRowArraysToTable(oldRows, newRows, currentOldRow, currentNewRow);
 
@@ -124,8 +123,8 @@ export class DiffService {
               this.rowIdCounter++;
             });
           }
-          oldRows.push(partOfNextLine);
-          newRows.push(partOfNextLine);
+          oldRows.push(new InputRow(currentAction, partOfNextLine));
+          newRows.push(new InputRow(currentAction, partOfNextLine));
           break;
       }
     });
@@ -148,8 +147,6 @@ export class DiffService {
 
   public selectChangedRows(oldText: Row[], newText: Row[]): void {
     const rowsCount = oldText.length;
-    console.log(oldText);
-    console.log(newText);
     for (let i = 0; i < rowsCount; i++) {
       const oldRow = oldText[i];
       const newRow = newText[i];
