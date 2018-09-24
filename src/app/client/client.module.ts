@@ -5,10 +5,13 @@ import {MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule, Ma
 import {RouterModule} from '@angular/router';
 
 import { DiffPageComponent } from './page/diff-page/diff-page.component';
-import { FileLoaderComponent } from './page/file-loader/file-loader.component';
 import { ModalSideBySideComponent } from './page/modal-side-by-side/modal-side-by-side.component';
 import { PageComponent } from './page/page.component';
+import { TextLoaderComponent } from './page/text-loader/text-loader.component';
 
+/**
+ * The client module.
+ */
 @NgModule({
   imports: [
     CommonModule,
@@ -20,7 +23,7 @@ import { PageComponent } from './page/page.component';
     MatTableModule,
     MatDialogModule,
   ],
-  declarations: [PageComponent, FileLoaderComponent, DiffPageComponent, ModalSideBySideComponent],
+  declarations: [PageComponent, TextLoaderComponent, DiffPageComponent, ModalSideBySideComponent],
   exports: [PageComponent],
 })
 export class ClientModule { }

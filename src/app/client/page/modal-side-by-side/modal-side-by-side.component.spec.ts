@@ -8,7 +8,7 @@ describe('ModalSideBySideComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ModalSideBySideComponent ]
+      declarations: [ ModalSideBySideComponent ],
     })
     .compileComponents();
   }));

@@ -10,6 +10,9 @@ import { ModalSideBySideComponent } from './client/page/modal-side-by-side/modal
 import { CoreModule } from './core/core.module';
 import { SharedModule } from './shared/shared.module';
 
+/**
+ * The general application module.
+ */
 @NgModule({
   declarations: [
     AppComponent,

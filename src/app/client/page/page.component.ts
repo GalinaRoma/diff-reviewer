@@ -1,5 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 
+/**
+ * Page component to route the loader and diff pages.
+ */
 @Component({
   selector: 'app-page',
   templateUrl: './page.component.html',
@@ -9,6 +12,9 @@ export class PageComponent implements OnInit {
 
   constructor() { }
 
+  /**
+   * Init function.
+   */
   public ngOnInit(): void {
   }
 

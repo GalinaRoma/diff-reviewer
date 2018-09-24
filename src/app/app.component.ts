@@ -1,10 +1,11 @@
 import { Component } from '@angular/core';
 
+/**
+ * The general application component.
+ */
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'],
 })
-export class AppComponent {
-  public title = 'diff-reviewer';
-}
+export class AppComponent {}

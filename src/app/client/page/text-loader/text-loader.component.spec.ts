@@ -1,20 +1,20 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { FileLoaderComponent } from './file-loader.component';
+import { TextLoaderComponent } from './text-loader.component';
 
-describe('FileLoaderComponent', () => {
-  let component: FileLoaderComponent;
-  let fixture: ComponentFixture<FileLoaderComponent>;
+describe('TextLoaderComponent', () => {
+  let component: TextLoaderComponent;
+  let fixture: ComponentFixture<TextLoaderComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ FileLoaderComponent ],
+      declarations: [ TextLoaderComponent ],
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(FileLoaderComponent);
+    fixture = TestBed.createComponent(TextLoaderComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

@@ -10,7 +10,8 @@
 
   <ng-container matColumnDef="text">
     <td class="text" mat-cell *matCellDef="let element"
-        [class.new-text]="diffService.isNewRow(element.id)" [class.old-text]="diffService.isOldRow(element.id)"> {{element.text}} </td>
+        [class.new-text]="diffService.isNewRow(element.id)" [class.old-text]="diffService.isOldRow(element.id)">
+      {{element.text}} </td>
   </ng-container>
 
   <ng-container matColumnDef="comment">

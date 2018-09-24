@@ -1,35 +1,70 @@
-import {Injectable} from '@angular/core';
-import {diff_match_patch} from 'diff-match-patch';
+import { Injectable } from '@angular/core';
+import { diff_match_patch } from 'diff-match-patch';
 
-import {Row} from '../models/row';
-import {RowType} from '../models/row-type.enum';
-import {Action} from '../models/action.enum';
-import {InputRow} from '../models/input-row';
+import { Action } from '../models/action.enum';
+import { InputRow } from '../models/input-row';
+import { Row } from '../models/row';
+import { RowType } from '../models/row-type.enum';
 
+import { InputService } from './input.service';
+
+/**
+ * Service to get diff and process it to the two text versions arrays.
+ */
 @Injectable({
   providedIn: 'root',
 })
 export class DiffService {
-  private dmp;
+  private readonly dmp;
+  /**
+   * The diff from diff-match-patch library.
+   */
   private diff;
+  /**
+   * Old text version with meta(row number, state and id).
+   */
   public oldVersionText = [];
+  /**
+   * New text version with meta(row number, state and id).
+   */
   public newVersionText = [];
+  /**
+   * Rows ids that are deleted from text (to set red background).
+   */
   public oldRowIds = [];
+  /**
+   * Rows ids that are added to text (to set green background).
+   */
   public newRowIds = [];
+  /**
+   * General counter of rows.
+   */
   public rowIdCounter = 1;
 
-  constructor() {
+  constructor(private inputService: InputService) {
     this.dmp = new diff_match_patch();
+    if (this.dmp) {
+      this.diff = this.dmp.diff_main(this.inputService.inputOldText, this.inputService.inputNewText);
+    }
   }
 
-  public setDiff(lastText: string, newText: string): void {
-    this.diff = this.dmp.diff_main(lastText, newText);
+  /**
+   * Clear global data.
+   */
+  private clearData(): void {
+    this.oldRowIds = [];
+    this.newRowIds = [];
+    this.newVersionText = [];
+    this.oldVersionText = [];
+    this.rowIdCounter = 1;
   }
 
-  public getDiff(): [[number, string]] {
-    return this.diff;
-  }
-
+  /**
+   * Add row to the relevant table seeing the row type.
+   *
+   * @param {Row} row Row with text, id? row number and changed boolean state.
+   * @param {RowType} rowType Row type (old row/new row).
+   */
   private addRowToTable(row: Row, rowType: RowType): number {
     if (rowType === RowType.oldRow) {
       this.oldVersionText.push(row);
@@ -37,11 +72,22 @@ export class DiffService {
       this.newVersionText.push(row);
     }
     this.rowIdCounter++;
-    const nextRowNumber = row.rowNumber + 1;
 
-    return nextRowNumber;
+    return row.rowNumber + 1;
   }
 
+  /**
+   * Process the multiline changed text (deleted or added).
+   * If the text has only part of one line (without \n), add it to the cumulative array and continue to get other parts.
+   * Else process the first line (after split text on \n), add it to the cumulative array, join it and write result row to the table.
+   * Get the last line, add other lines to the table.
+   * Add the saved last line to the cumulative array for getting all next parts.
+   *
+   * @param {string[]} currentLines Element of library diff splited by \n.
+   * @param {InputRow[]} rowsToNextDisplay The cumulative array for current line.
+   * @param {RowType} rowType Row type.
+   * @param {number} rowNumber Row number in the certain text version.
+   */
   private processMultilineText(currentLines: string[], rowsToNextDisplay: InputRow[], rowType: RowType, rowNumber: number):
     [number, InputRow[]] {
     let partOfNextLine = currentLines.slice(0, 1)[0];
@@ -55,13 +101,22 @@ export class DiffService {
       rowsToNextDisplay = [];
 
       partOfNextLine = currentLines.pop();
-      currentLines.forEach(line => rowNumber = this.addRowToTable(new Row(this.rowIdCounter, line, rowNumber, true), rowType));
+      currentLines.forEach(line => rowNumber = this.addRowToTable(new Row(this.rowIdCounter, line, rowNumber, true),
+        rowType));
     }
     rowsToNextDisplay.push(new InputRow(action, partOfNextLine));
 
     return [rowNumber, rowsToNextDisplay];
   }
 
+  /**
+   * Sdd to the both tables common lines.
+   *
+   * @param {InputRow[]} oldRows Old version rows.
+   * @param {InputRow[]} newRows New version rows.
+   * @param {number} currentOldRow Number of the row in the old text version.
+   * @param {number} currentNewRow Number of the row in the new text version.
+   */
   private transformPrevRowArraysToTable(oldRows: InputRow[], newRows: InputRow[], currentOldRow: number, currentNewRow: number):
     [number, number, InputRow[], InputRow[]] {
     const oldLine = oldRows.map(elem => elem.text).join('');
@@ -80,21 +135,75 @@ export class DiffService {
     return [currentOldRow, currentNewRow, oldRows, newRows];
   }
 
-  private clearData(): void {
-    this.oldRowIds = [];
-    this.newRowIds = [];
-    this.newVersionText = [];
-    this.oldVersionText = [];
-    this.rowIdCounter = 1;
+  /**
+   * Transform diff tables.
+   * Add extra empty lines opposite the deleted or added line.
+   *
+   * @param {Row[]} oldText Rows of the old text version.
+   * @param {Row[]} newText Rows of the new text version.
+   */
+  private transformDiffTables(oldText: Row[], newText: Row[]): void {
+    const modifiedOldVersionText = [];
+    const modifiedNewVersionText = [];
+    let oldTextPointer = 0;
+    let newTextPointer = 0;
+    for (let i = 0; i < oldText.length + newText.length; i++) {
+      const oldRow = oldText[oldTextPointer];
+      const newRow = newText[newTextPointer];
+      if (newText.length === newTextPointer && oldText.length === oldTextPointer) {
+        break;
+      }
+      if (newText.length !== newTextPointer && oldText.length !== oldTextPointer && oldRow.text === newRow.text) {
+        modifiedOldVersionText.push(oldRow);
+        modifiedNewVersionText.push(newRow);
+        oldTextPointer++;
+        newTextPointer++;
+      } else if (newTextPointer === newText.length || (oldTextPointer !== oldText.length && oldRow.id < newRow.id)) {
+        modifiedOldVersionText.push(oldRow);
+        oldTextPointer++;
+        modifiedNewVersionText.push(new Row(null, '', null));
+      } else if (oldTextPointer === oldText.length || (newTextPointer !== newText.length && oldRow.id >= newRow.id)) {
+        modifiedNewVersionText.push(newRow);
+        newTextPointer++;
+        modifiedOldVersionText.push(new Row(null, '', null));
+      }
+    }
+    this.oldVersionText = modifiedOldVersionText;
+    this.newVersionText = modifiedNewVersionText;
   }
 
-  public processDiff(diff: [number, string][]): { oldVersionText: Row[], newVersionText: Row[]} {
+  /**
+   * Select rows by id to color in green or red color.
+   *
+   * @param {Row[]} oldText Rows of the old text version.
+   * @param {Row[]} newText Rows of the new text version.
+   */
+  private selectChangedRows(oldText: Row[], newText: Row[]): void {
+    for (let i = 0; i < oldText.length; i++) {
+      const oldRow = oldText[i];
+      const newRow = newText[i];
+      if (oldRow.changed) {
+        this.oldRowIds.push(oldRow.id);
+      }
+      if (newRow.changed) {
+        this.newRowIds.push(newRow.id);
+      }
+    }
+  }
+
+  /**
+   * Process diff array by action(delete, add, not changed).
+   * It action process divide into process the first line, last line and other between its.
+   * Transform result arrays with extra empty lines.
+   * Add ids to relevant arrays to color itself.
+   */
+  public processDiff(): { oldVersionText: Row[], newVersionText: Row[]} {
     this.clearData();
     let oldRows = [];
     let newRows = [];
     let currentOldRow = 1;
     let currentNewRow = 1;
-    diff.forEach(currentValue => {
+    this.diff.forEach(currentValue => {
       const [action, text] = currentValue;
       const currentLines = text.split('\n');
       switch (action) {
@@ -129,83 +238,27 @@ export class DiffService {
       }
     });
     [currentOldRow, currentNewRow, oldRows, newRows] = this.transformPrevRowArraysToTable(oldRows, newRows, currentOldRow, currentNewRow);
-    const transformedTexts = this.transformDiffTables(this.oldVersionText, this.newVersionText);
-    this.oldVersionText = transformedTexts.oldTextVersion;
-    this.newVersionText = transformedTexts.newTextVersion;
+    this.transformDiffTables(this.oldVersionText, this.newVersionText);
     this.selectChangedRows(this.oldVersionText, this.newVersionText);
 
     return { oldVersionText: this.oldVersionText, newVersionText: this.newVersionText };
   }
 
+  /**
+   * Check the row should be deleted(have red background).
+   *
+   * @param rowId Id of the current row.
+   */
   public isOldRow(rowId: number): boolean {
     return this.oldRowIds.includes(rowId);
   }
 
+  /**
+   * Check the row should be added(have green background).
+   *
+   * @param rowId Id of the current row.
+   */
   public isNewRow(rowId: number): boolean {
     return this.newRowIds.includes(rowId);
-  }
-
-  public selectChangedRows(oldText: Row[], newText: Row[]): void {
-    const rowsCount = oldText.length;
-    for (let i = 0; i < rowsCount; i++) {
-      const oldRow = oldText[i];
-      const newRow = newText[i];
-      if (oldRow.text === newRow.text && !oldRow.changed && !newRow.changed) {
-        continue;
-      }
-      if (oldRow.changed) {
-        this.oldRowIds.push(oldRow.id);
-      }
-      if (newRow.changed) {
-        this.newRowIds.push(newRow.id);
-      }
-    }
-  }
-
-  public transformDiffTables(oldText: Row[], newText: Row[]): {oldTextVersion: Row[], newTextVersion: Row[]} {
-    let oldTextPointer = 0;
-    let newTextPointer = 0;
-    const oldVersionText = [];
-    const newVersionText = [];
-    const rowsCount = oldText.length + newText.length;
-    for (let i = 0; i < rowsCount; i++) {
-      const oldRow = oldText[oldTextPointer];
-      const newRow = newText[newTextPointer];
-      if (newText.length !== newTextPointer && oldText.length !== oldTextPointer) {
-        if (oldRow.text === newRow.text) {
-          oldVersionText.push(oldRow);
-          newVersionText.push(newRow);
-          oldTextPointer++;
-          newTextPointer++;
-          continue;
-        }
-        if (oldRow.id < newRow.id) {
-          oldVersionText.push(oldRow);
-          oldTextPointer++;
-          if (oldRow.changed) {
-            newVersionText.push(new Row(null, '', null));
-          }
-        } else {
-          newVersionText.push(newRow);
-          newTextPointer++;
-          if (newRow.changed) {
-            oldVersionText.push(new Row(null, '', null));
-          }
-        }
-      } else {
-        if (oldTextPointer === oldText.length && newTextPointer !== newText.length) {
-          newVersionText.push(newRow);
-          newTextPointer++;
-          oldVersionText.push(new Row(null, '', null));
-          continue;
-        }
-        if (oldTextPointer !== oldText.length && newTextPointer === newText.length) {
-          oldVersionText.push(oldRow);
-          oldTextPointer++;
-          newVersionText.push(new Row(null, '', null));
-        }
-      }
-    }
-    return {oldTextVersion: oldVersionText, newTextVersion: newVersionText};
   }
 }
