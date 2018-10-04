@@ -9,14 +9,20 @@
   </ng-container>
 
   <ng-container matColumnDef="text">
-    <td class="text" mat-cell *matCellDef="let element"
-        [class.new-text]="diffService.isNewRow(element.id)" [class.old-text]="diffService.isOldRow(element.id)">
-      {{element.text}} </td>
+    <td class="text" data-id={{element.id}} mat-cell *matCellDef="let element"
+        [class.new-text]="diffService.isNewRow(element.id)" (textSelect)="createMessage($event)" [class.old-text]="diffService.isOldRow(element.id)">
+      {{element.text}}
+      <div class="comment" *ngIf="hiddenComment[element.id - 1]">
+        <button class="icon-button close-button" (click)="closeComment($event, element.id)"><i class="far fa-window-close"></i></button>
+        <form class="comment-form" #commentForm="ngForm" (ngSubmit)="loadComment($event, commentForm, element.id)">
+          <mat-form-field class="comment-text">
+            <input matInput type="text" name="text" placeholder="Enter your comment" ngModel/>
+          </mat-form-field>
+          <button mat-button type="submit" class="send-comment-button">Add comment</button>
+        </form>
+      </div>
+    </td>
   </ng-container>
 
-  <ng-container matColumnDef="comment">
-    <td class="comment" mat-cell *matCellDef="let element"> {{element.comment}} </td>
-  </ng-container>
-
-  <tr class="row" mat-row *matRowDef="let row; columns: ['oldRowNumber', 'newRowNumber', 'text', 'comment']">{{row}}</tr>
+  <tr class="row" mat-row *matRowDef="let row; columns: ['oldRowNumber', 'newRowNumber', 'text']">{{row}}</tr>
 </table>

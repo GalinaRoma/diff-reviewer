@@ -19,6 +19,8 @@ export class CommonRow {
    */
   public id: number;
 
+  public comment: Comment;
+
   constructor(id: number, text: string, oldRowNumber: number, newRowNumber: number) {
     this.oldRowNumber = oldRowNumber;
     this.newRowNumber = newRowNumber;
