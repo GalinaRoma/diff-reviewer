@@ -17,10 +17,6 @@ import { InputService } from './input.service';
 export class DiffService {
   private readonly dmp;
   /**
-   * The diff from diff-match-patch library.
-   */
-  private diff;
-  /**
    * Old text version with meta(row number, state and id).
    */
   public oldVersionText = [];
@@ -39,13 +35,10 @@ export class DiffService {
   /**
    * General counter of rows.
    */
-  public rowIdCounter = 1;
+  public rowIdCounter = 0;
 
   constructor(private inputService: InputService) {
     this.dmp = new diff_match_patch();
-    if (this.dmp) {
-      this.diff = this.dmp.diff_main(this.inputService.inputOldText, this.inputService.inputNewText);
-    }
   }
 
   /**
@@ -56,7 +49,7 @@ export class DiffService {
     this.newRowIds = [];
     this.newVersionText = [];
     this.oldVersionText = [];
-    this.rowIdCounter = 1;
+    this.rowIdCounter = 0;
   }
 
   /**
@@ -66,6 +59,7 @@ export class DiffService {
    * @param {RowType} rowType Row type (old row/new row).
    */
   private addRowToTable(row: Row, rowType: RowType): number {
+    console.log(row);
     if (rowType === RowType.oldRow) {
       this.oldVersionText.push(row);
     } else {
@@ -90,6 +84,7 @@ export class DiffService {
    */
   private processMultilineText(currentLines: string[], rowsToNextDisplay: InputRow[], rowType: RowType, rowNumber: number):
     [number, InputRow[]] {
+    console.log(this.rowIdCounter);
     let partOfNextLine = currentLines.slice(0, 1)[0];
     const action = rowType === RowType.oldRow ? Action.delete : Action.add;
     if (currentLines.length !== 1) {
@@ -123,6 +118,7 @@ export class DiffService {
     const newLine = newRows.map(elem => elem.text).join('');
     this.oldVersionText.push(new Row(this.rowIdCounter, oldLine, currentOldRow,
       oldRows.slice(oldRows.length - 1, oldRows.length)[0].action !== Action.notChanged));
+    console.log(this.oldVersionText);
     this.rowIdCounter++;
     this.newVersionText.push(new Row(this.rowIdCounter, newLine, currentNewRow,
       newRows.slice(newRows.length - 1, newRows.length)[0].action !== Action.notChanged));
@@ -199,11 +195,12 @@ export class DiffService {
    */
   public processDiff(): { oldVersionText: Row[], newVersionText: Row[]} {
     this.clearData();
+    const diff = this.dmp.diff_main(this.inputService.inputOldText, this.inputService.inputNewText);
     let oldRows = [];
     let newRows = [];
     let currentOldRow = 1;
     let currentNewRow = 1;
-    this.diff.forEach(currentValue => {
+    diff.forEach(currentValue => {
       const [action, text] = currentValue;
       const currentLines = text.split('\n');
       switch (action) {
@@ -238,6 +235,7 @@ export class DiffService {
       }
     });
     [currentOldRow, currentNewRow, oldRows, newRows] = this.transformPrevRowArraysToTable(oldRows, newRows, currentOldRow, currentNewRow);
+    console.log(this.oldVersionText);
     this.transformDiffTables(this.oldVersionText, this.newVersionText);
     this.selectChangedRows(this.oldVersionText, this.newVersionText);
 

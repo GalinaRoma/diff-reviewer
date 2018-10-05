@@ -7,9 +7,13 @@ import { Comment } from '../models/comment';
 })
 export class CommentMockService {
 
-  public comments = [
-    new Comment('Galina', 'first', new Date(), 2),
+  public comments: object[] = [
+    {'23': new Comment('Galina', 'first', new Date(), 1)},
   ];
+  public transformedComments;
   constructor() {
+  }
+  public transformComments(): void {
+    this.transformedComments = this.comments.map(row => Object.entries(row).map(r => r[1]));
   }
 }

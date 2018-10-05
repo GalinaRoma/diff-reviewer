@@ -22,7 +22,8 @@ export class DiffPageComponent implements OnInit {
    * The rowset of lines to display in HTML.
    */
   public table: CommonRow[];
-  public hiddenComment: Boolean[] = [];
+  public visibleCommentCreation: Boolean[] = [];
+  public selectedText: string[] = [];
 
   constructor(public diffService: DiffService, public dialog: MatDialog, public commentService: CommentMockService) {}
 
@@ -40,8 +41,11 @@ export class DiffPageComponent implements OnInit {
    * Get diff and load table for page.
    */
   public ngOnInit(): void {
+    this.table = [];
     const { oldVersionText, newVersionText } = this.diffService.processDiff();
     this.table = this.createDiffTable(oldVersionText, newVersionText);
+    this.commentService.transformComments();
+    console.log(this.commentService.transformedComments);
   }
 
   /**
@@ -61,11 +65,11 @@ export class DiffPageComponent implements OnInit {
       const oldRow = oldText[oldTextPointer];
       const newRow = newText[newTextPointer];
       if (newText.length !== newTextPointer && oldText.length !== oldTextPointer) {
-        if (!oldRow.id) {
+        if (oldRow.id === null) {
           oldTextPointer++;
           continue;
         }
-        if (!newRow.id) {
+        if (newRow.id === null) {
           newTextPointer++;
           continue;
         }
@@ -95,19 +99,28 @@ export class DiffPageComponent implements OnInit {
     return table;
   }
 
-  @HostListener('document:selectionchange', ['$event']) public createMessage(event: any): void {
+  @HostListener('document:selectionchange') public createMessage(): void {
     const selectElem = document.getSelection();
-    const id = selectElem.baseNode.parentElement.id;
-    this.hiddenComment[Number(id) - 1] = true;
+    const selectedText = selectElem.toString();
+    if (selectedText !== '' && selectedText !== '\n') {
+      const id = selectElem.baseNode.parentElement.id;
+      this.selectedText[Number(id)] = selectedText;
+      this.visibleCommentCreation[Number(id)] = true;
+      console.log(this.commentService.transformedComments);
+    }
   }
 
   public closeComment(event: Event, rowId: number): void {
-    this.hiddenComment[rowId - 1] = false;
+    this.visibleCommentCreation[rowId] = false;
   }
 
   public loadComment(event: Event, form: NgForm, rowId: number): void {
     event.preventDefault();
     const message = form.controls['text'].value;
-    this.commentService.comments.push(new Comment('Admin', message, new Date(), rowId));
+    const a = {};
+    a[this.selectedText[rowId]] = new Comment('Admin', message, new Date(), rowId);
+    Object.assign(this.commentService.comments[rowId], a);
+    this.commentService.transformComments();
+    console.log(this.commentService.transformedComments);
   }
 }

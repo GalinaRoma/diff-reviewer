@@ -10,11 +10,11 @@ export class InputService {
   /**
    * The input old text.
    */
-  public inputOldText: string;
+  public inputOldText: String = '';
   /**
    * The input new text.
    */
-  public inputNewText: string;
+  public inputNewText: String = '';
 
   constructor() { }
 }
