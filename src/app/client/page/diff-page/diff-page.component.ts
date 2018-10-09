@@ -1,96 +1,129 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, OnInit, HostListener} from '@angular/core';
+import {NgForm} from '@angular/forms';
+import { MatDialog } from '@angular/material';
 
-import {DiffService} from '../../../core/services/diff.service';
+import { Comment } from '../../../core/models/comment';
+import { CommonRow } from '../../../core/models/common-row';
+import { Row } from '../../../core/models/row';
+import {CommentMockService} from '../../../core/services/comment-mock.service';
+import { DiffService } from '../../../core/services/diff.service';
+import { ModalSideBySideComponent } from '../modal-side-by-side/modal-side-by-side.component';
 
+/**
+ * Component for the general diff with common view of two texts.
+ */
 @Component({
   selector: 'app-diff-page',
   templateUrl: './diff-page.component.html',
   styleUrls: ['./diff-page.component.css'],
 })
 export class DiffPageComponent implements OnInit {
-  public table = [];
+  /**
+   * The rowset of lines to display in HTML.
+   */
+  public table: CommonRow[];
+  public visibleCommentCreation: Boolean[] = [];
+  public selectedText: string[] = [];
 
-  constructor(private diffService: DiffService) {
-  }
+  constructor(public diffService: DiffService, public dialog: MatDialog, public commentService: CommentMockService) {}
 
-  public ngOnInit(): void {
-    this.processDiff();
-  }
-
-  private processMultilineText(currentLines: string[], rowsToNextDisplay: string[], rowNumberName: string, rowNumber: number): any[] {
-    let partOfNextLine = currentLines.slice(0, 1)[0];
-    if (currentLines.length !== 1) {
-      const partOfPrevLine = currentLines.shift();
-      rowsToNextDisplay.push(partOfPrevLine);
-      const row = {text: rowsToNextDisplay.join('')};
-      row[rowNumberName] = rowNumber;
-      this.table.push(row);
-      rowsToNextDisplay = [];
-      rowNumber++;
-
-      partOfNextLine = currentLines.pop();
-      currentLines.forEach(line => {
-        this.table.push({oldRowNumber: rowNumber, text: line});
-        rowNumber++;
-      });
-    }
-    rowsToNextDisplay.push(partOfNextLine);
-
-    return [rowNumber, rowsToNextDisplay];
-  }
-
-  private transformPrevRowArraysToTable(oldRows: string[], newRows: string[], currentOldRow: number, currentNewRow: number): any[] {
-    const oldLine = oldRows.join('');
-    const newLine = newRows.join('');
-    if (oldLine !== newLine) {
-      this.table.push({oldRowNumber: currentOldRow, newRowNumber: currentNewRow, text: oldLine});
-    }
-    this.table.push({oldRowNumber: currentOldRow, newRowNumber: currentNewRow, text: newLine});
-    oldRows = [];
-    newRows = [];
-    currentOldRow += 1;
-    currentNewRow += 1;
-
-    return [currentOldRow, currentNewRow, oldRows, newRows];
-  }
-
-  private processDiff(): void {
-    let oldRows = [];
-    let newRows = [];
-    let currentOldRow = 1;
-    let currentNewRow = 1;
-    const diff = this.diffService.getDiff();
-    diff.forEach(currentValue => {
-      const [action, text] = currentValue;
-      const currentLines = text.split('\n');
-      switch (action) {
-        case -1:
-          [currentOldRow, oldRows] = this.processMultilineText(currentLines, oldRows, 'oldRowNumber', currentOldRow);
-          break;
-        case 1:
-          [currentNewRow, newRows] = this.processMultilineText(currentLines, newRows, 'newRowNumber', currentNewRow);
-          break;
-        case 0:
-          let partOfNextLine = currentLines.slice(0, 1)[0];
-          if (currentLines.length !== 1) {
-            const previousLinePart = currentLines.shift();
-            oldRows.push(previousLinePart);
-            newRows.push(previousLinePart);
-            [currentOldRow, currentNewRow, oldRows, newRows] =
-              this.transformPrevRowArraysToTable(oldRows, newRows, currentOldRow, currentNewRow);
-
-            partOfNextLine = currentLines.pop();
-            currentLines.forEach(line => {
-              this.table.push({oldRowNumber: currentOldRow, newRowNumber: currentNewRow, text: line});
-              currentOldRow += 1;
-              currentNewRow += 1;
-            });
-          }
-          oldRows.push(partOfNextLine);
-          newRows.push(partOfNextLine);
-          break;
-      }
+  /**
+   * The click event handler to open modal window with side-by-side diff.
+   */
+  public openModal(): void {
+    this.dialog.open(ModalSideBySideComponent, {
+      width: '98%',
+      height: '96%',
     });
-    this.transformPrevRowArraysToTable(oldRows, newRows, currentOldRow, currentNewRow);
+  }
+
+  /**
+   * Get diff and load table for page.
+   */
+  public ngOnInit(): void {
+    this.table = [];
+    const { oldVersionText, newVersionText } = this.diffService.processDiff();
+    this.table = this.createDiffTable(oldVersionText, newVersionText);
+    for (let i = 0; i < this.table.length; i++) {
+      if (!this.commentService.comments[i]) {
+        this.commentService.comments[i] = {};
+      }
+    }
+    this.commentService.transformComments();
+  }
+
+  /**
+   * Get two arrays with old and new text versions and create general table for diff.
+   * Go through each array and compare lines by text and id.
+   * Not add lines with no id (these lines are necessary for side-by-side diff).
+   * In the case of the any array termination add to the table a remainder of another one.
+   *
+   * @param {Row[]} oldText Old text version with meta data(row number, id and state).
+   * @param {Row[]} newText New text version with meta data(row number, id and state).
+   */
+  private createDiffTable(oldText: Row[], newText: Row[]): CommonRow[] {
+    const table = [];
+    let oldTextPointer = 0;
+    let newTextPointer = 0;
+    for (let i = 0; i < oldText.length + newText.length; i++) {
+      const oldRow = oldText[oldTextPointer];
+      const newRow = newText[newTextPointer];
+      if (newText.length !== newTextPointer && oldText.length !== oldTextPointer) {
+        if (oldRow.id === null) {
+          oldTextPointer++;
+          continue;
+        }
+        if (newRow.id === null) {
+          newTextPointer++;
+          continue;
+        }
+        if (oldRow.text === newRow.text) {
+          table.push(new CommonRow(oldRow.id, oldRow.text, oldRow.rowNumber, newRow.rowNumber));
+          oldTextPointer++;
+          newTextPointer++;
+        } else if (oldRow.id < newRow.id) {
+          table.push(new CommonRow(oldRow.id, oldRow.text, oldRow.rowNumber, null));
+          oldTextPointer++;
+        } else {
+          table.push(new CommonRow(newRow.id, newRow.text, null, newRow.rowNumber));
+          newTextPointer++;
+        }
+      } else {
+        if (oldTextPointer === oldText.length && newTextPointer !== newText.length) {
+          table.push(new CommonRow(newRow.id, newRow.text, null, newRow.rowNumber));
+          newTextPointer++;
+          continue;
+        }
+        if (oldTextPointer !== oldText.length && newTextPointer === newText.length) {
+          table.push(new CommonRow(oldRow.id, oldRow.text, oldRow.rowNumber, null));
+          oldTextPointer++;
+        }
+      }
+    }
+    return table;
+  }
+
+  @HostListener('document:selectionchange') public createMessage(): void {
+    const selectElem = document.getSelection();
+    const selectedText = selectElem.toString();
+    if (selectedText !== '' && selectedText !== '\n') {
+      const id = selectElem.baseNode.parentElement.id;
+      this.selectedText[Number(id)] = selectedText;
+      this.visibleCommentCreation[Number(id)] = true;
+    }
+  }
+
+  public closeComment(event: Event, rowId: number): void {
+    this.visibleCommentCreation[rowId] = false;
+  }
+
+  public loadComment(event: Event, form: NgForm, rowId: number): void {
+    event.preventDefault();
+    const message = form.controls['text'].value;
+    const a = {};
+    a[this.selectedText[rowId]] = new Comment('Admin', message, new Date(), rowId);
+    Object.assign(this.commentService.comments[rowId], a);
+    this.visibleCommentCreation[rowId] = false;
+    this.commentService.transformComments();
   }
 }

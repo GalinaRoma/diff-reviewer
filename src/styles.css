@@ -1,1 +1,18 @@
 @import "~@angular/material/prebuilt-themes/indigo-pink.css";
+.old-text {
+  background: rgba(200, 24, 19, 0.37);
+}
+.new-text {
+  background: rgba(9, 200, 43, 0.46);
+}
+.row {
+  height: 50px;
+}
+.text {
+  padding: 4px;
+}
+.row-number {
+  width: 24px;
+  text-align: center;
+  border-right: 1px solid #c8c8c8;
+}

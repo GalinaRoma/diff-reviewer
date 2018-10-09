@@ -1,3 +1,4 @@
+<button mat-button color="primary" type="button" (click)="openModal()">Side-by-side diff</button>
 <table mat-table [dataSource]="table" class="table">
   <ng-container matColumnDef="oldRowNumber">
     <td class="row-number" mat-cell *matCellDef="let element"> {{element.oldRowNumber}} </td>
@@ -8,12 +9,34 @@
   </ng-container>
 
   <ng-container matColumnDef="text">
-    <td class="text" mat-cell *matCellDef="let element"> {{element.text}} </td>
+    <td class="text" data-id={{element.id}} mat-cell *matCellDef="let element"
+        [class.new-text]="diffService.isNewRow(element.id)" (textSelect)="createMessage()" [class.old-text]="diffService.isOldRow(element.id)">
+      {{element.text}}
+      <div class="comment" *ngIf="visibleCommentCreation[element.id]">
+        <button class="icon-button close-button" (click)="closeComment($event, element.id)"><i class="far fa-window-close"></i></button>
+        <form class="comment-form" #commentForm="ngForm" (ngSubmit)="loadComment($event, commentForm, element.id)">
+          <mat-form-field class="comment-text">
+            <input matInput type="text" name="text" placeholder="Enter your comment" ngModel/>
+          </mat-form-field>
+          <button mat-button type="submit" class="send-comment-button">Add comment</button>
+        </form>
+      </div>
+      <div class="comment" *ngFor="let comment of this.commentService.transformedComments[element.id]">
+        <form class="comment-form" #commentForm="ngForm">
+          <mat-form-field class="comment-creator">
+            <input matInput type="text" name="creator" [(value)]="comment.creator" disabled/>
+          </mat-form-field>
+          <mat-form-field class="comment-date">
+            <input matInput type="text" name="date" [(value)]="comment.creationDate" disabled/>
+          </mat-form-field>
+          <mat-form-field class="comment-text">
+            <input matInput type="text" name="text" [(value)]="comment.text" disabled/>
+          </mat-form-field>
+          <button mat-button type="submit" class="send-comment-button">Reply</button>
+        </form>
+      </div>
+    </td>
   </ng-container>
 
-  <ng-container matColumnDef="comment">
-    <td class="comment" mat-cell *matCellDef="let element"> {{element.comment}} </td>
-  </ng-container>
-
-  <tr mat-row *matRowDef="let row; columns: ['oldRowNumber', 'newRowNumber', 'text', 'comment']">{{row}}</tr>
+  <tr class="row" mat-row *matRowDef="let row; columns: ['oldRowNumber', 'newRowNumber', 'text']">{{row}}</tr>
 </table>

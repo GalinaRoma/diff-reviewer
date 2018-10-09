@@ -13,10 +13,10 @@ textarea {
   border-bottom: none;
   font: 16px Inconsolata monospace;
 }
-.view-changes {
+.view-changes-button {
   display: block;
-  margin: 10px auto;
   width: 300px;
   height: 30px;
+  margin: 10px auto;
 }
 
