@@ -44,8 +44,14 @@ export class DiffPageComponent implements OnInit {
     this.table = [];
     const { oldVersionText, newVersionText } = this.diffService.processDiff();
     this.table = this.createDiffTable(oldVersionText, newVersionText);
+    for (let i = 0; i < this.table.length; i++) {
+      console.log(this.commentService.comments[i]);
+      if (!this.commentService.comments[i]) {
+        console.log('go');
+        this.commentService.comments[i] = {};
+      }
+    }
     this.commentService.transformComments();
-    console.log(this.commentService.transformedComments);
   }
 
   /**
@@ -106,7 +112,6 @@ export class DiffPageComponent implements OnInit {
       const id = selectElem.baseNode.parentElement.id;
       this.selectedText[Number(id)] = selectedText;
       this.visibleCommentCreation[Number(id)] = true;
-      console.log(this.commentService.transformedComments);
     }
   }
 
@@ -119,8 +124,10 @@ export class DiffPageComponent implements OnInit {
     const message = form.controls['text'].value;
     const a = {};
     a[this.selectedText[rowId]] = new Comment('Admin', message, new Date(), rowId);
+    console.log(a);
+    console.log(this.commentService.comments[rowId]);
     Object.assign(this.commentService.comments[rowId], a);
+    this.visibleCommentCreation[rowId] = false;
     this.commentService.transformComments();
-    console.log(this.commentService.transformedComments);
   }
 }

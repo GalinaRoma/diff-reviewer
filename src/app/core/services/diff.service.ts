@@ -1,12 +1,12 @@
-import { Injectable } from '@angular/core';
-import { diff_match_patch } from 'diff-match-patch';
+import {Injectable} from '@angular/core';
+import {diff_match_patch} from 'diff-match-patch';
 
-import { Action } from '../models/action.enum';
-import { InputRow } from '../models/input-row';
-import { Row } from '../models/row';
-import { RowType } from '../models/row-type.enum';
+import {Action} from '../models/action.enum';
+import {InputRow} from '../models/input-row';
+import {Row} from '../models/row';
+import {RowType} from '../models/row-type.enum';
 
-import { InputService } from './input.service';
+import {InputService} from './input.service';
 
 /**
  * Service to get diff and process it to the two text versions arrays.
@@ -84,7 +84,6 @@ export class DiffService {
    */
   private processMultilineText(currentLines: string[], rowsToNextDisplay: InputRow[], rowType: RowType, rowNumber: number):
     [number, InputRow[]] {
-    console.log(this.rowIdCounter);
     let partOfNextLine = currentLines.slice(0, 1)[0];
     const action = rowType === RowType.oldRow ? Action.delete : Action.add;
     if (currentLines.length !== 1) {
@@ -116,12 +115,11 @@ export class DiffService {
     [number, number, InputRow[], InputRow[]] {
     const oldLine = oldRows.map(elem => elem.text).join('');
     const newLine = newRows.map(elem => elem.text).join('');
-    this.oldVersionText.push(new Row(this.rowIdCounter, oldLine, currentOldRow,
-      oldRows.slice(oldRows.length - 1, oldRows.length)[0].action !== Action.notChanged));
-    console.log(this.oldVersionText);
+    const changedOld = oldRows.some(row => (row.action !== Action.notChanged && row.text !== ''));
+    const changedNew = newRows.some(row => (row.action !== Action.notChanged && row.text !== ''));
+    this.oldVersionText.push(new Row(this.rowIdCounter, oldLine, currentOldRow, changedOld));
     this.rowIdCounter++;
-    this.newVersionText.push(new Row(this.rowIdCounter, newLine, currentNewRow,
-      newRows.slice(newRows.length - 1, newRows.length)[0].action !== Action.notChanged));
+    this.newVersionText.push(new Row(this.rowIdCounter, newLine, currentNewRow, changedNew));
     this.rowIdCounter++;
     oldRows = [];
     newRows = [];
