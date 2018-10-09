@@ -1,4 +1,4 @@
-import {Component, OnInit, Directive, HostListener} from '@angular/core';
+import {Component, OnInit, HostListener} from '@angular/core';
 import {NgForm} from '@angular/forms';
 import { MatDialog } from '@angular/material';
 
@@ -45,9 +45,7 @@ export class DiffPageComponent implements OnInit {
     const { oldVersionText, newVersionText } = this.diffService.processDiff();
     this.table = this.createDiffTable(oldVersionText, newVersionText);
     for (let i = 0; i < this.table.length; i++) {
-      console.log(this.commentService.comments[i]);
       if (!this.commentService.comments[i]) {
-        console.log('go');
         this.commentService.comments[i] = {};
       }
     }
@@ -124,8 +122,6 @@ export class DiffPageComponent implements OnInit {
     const message = form.controls['text'].value;
     const a = {};
     a[this.selectedText[rowId]] = new Comment('Admin', message, new Date(), rowId);
-    console.log(a);
-    console.log(this.commentService.comments[rowId]);
     Object.assign(this.commentService.comments[rowId], a);
     this.visibleCommentCreation[rowId] = false;
     this.commentService.transformComments();
