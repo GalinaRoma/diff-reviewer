@@ -7,6 +7,7 @@ import {Row} from '../models/row';
 import {RowType} from '../models/row-type.enum';
 
 import {InputService} from './input.service';
+import {CommonRow} from '../models/common-row';
 
 /**
  * Service to get diff and process it to the two text versions arrays.
@@ -59,7 +60,6 @@ export class DiffService {
    * @param {RowType} rowType Row type (old row/new row).
    */
   private addRowToTable(row: Row, rowType: RowType): number {
-    console.log(row);
     if (rowType === RowType.oldRow) {
       this.oldVersionText.push(row);
     } else {
@@ -185,6 +185,58 @@ export class DiffService {
     }
   }
 
+  public setIds(oldText: Row[], newText: Row[]): any {
+    const oldRows = [];
+    const newRows = [];
+    let oldTextPointer = 0;
+    let newTextPointer = 0;
+    let rowId = 0;
+    for (let i = 0; i < oldText.length + newText.length; i++) {
+      const oldRow = oldText[oldTextPointer];
+      const newRow = newText[newTextPointer];
+      if (newText.length !== newTextPointer && oldText.length !== oldTextPointer) {
+        if (oldRow.id === null) {
+          oldTextPointer++;
+          continue;
+        }
+        if (newRow.id === null) {
+          newTextPointer++;
+          continue;
+        }
+        if (oldRow.text === newRow.text) {
+          oldRows.push(new Row(rowId, oldRow.text, oldRow.rowNumber));
+          newRows.push(new Row(rowId, newRow.text, newRow.rowNumber));
+          rowId++;
+          oldTextPointer++;
+          newTextPointer++;
+        } else if (oldRow.id < newRow.id) {
+          oldRows.push(new Row(rowId, oldRow.text, oldRow.rowNumber));
+          oldTextPointer++;
+          rowId++;
+        } else {
+          newRows.push(new Row(rowId, newRow.text, newRow.rowNumber));
+          rowId++;
+          newTextPointer++;
+        }
+      } else {
+        if (oldTextPointer === oldText.length && newTextPointer !== newText.length) {
+          newRows.push(new Row(rowId, newRow.text, newRow.rowNumber));
+          newTextPointer++;
+          rowId++;
+          continue;
+        }
+        if (oldTextPointer !== oldText.length && newTextPointer === newText.length) {
+          oldRows.push(new Row(rowId, oldRow.text, oldRow.rowNumber));
+          oldTextPointer++;
+          rowId++;
+        }
+      }
+    }
+    const oldRowsModi = oldRows;
+    const newRowsModi = newRows;
+    return [oldRowsModi, newRowsModi];
+  }
+
   /**
    * Process diff array by action(delete, add, not changed).
    * It action process divide into process the first line, last line and other between its.
@@ -233,8 +285,10 @@ export class DiffService {
       }
     });
     [currentOldRow, currentNewRow, oldRows, newRows] = this.transformPrevRowArraysToTable(oldRows, newRows, currentOldRow, currentNewRow);
-    console.log(this.oldVersionText);
     this.transformDiffTables(this.oldVersionText, this.newVersionText);
+    const [oldRowsModi, newRowsModi] = this.setIds(this.oldVersionText, this.newVersionText);
+    this.oldVersionText = oldRowsModi;
+    this.newVersionText = newRowsModi;
     this.selectChangedRows(this.oldVersionText, this.newVersionText);
 
     return { oldVersionText: this.oldVersionText, newVersionText: this.newVersionText };

@@ -65,6 +65,7 @@ export class DiffPageComponent implements OnInit {
     const table = [];
     let oldTextPointer = 0;
     let newTextPointer = 0;
+    let rowId = 0;
     for (let i = 0; i < oldText.length + newText.length; i++) {
       const oldRow = oldText[oldTextPointer];
       const newRow = newText[newTextPointer];
@@ -78,25 +79,30 @@ export class DiffPageComponent implements OnInit {
           continue;
         }
         if (oldRow.text === newRow.text) {
-          table.push(new CommonRow(oldRow.id, oldRow.text, oldRow.rowNumber, newRow.rowNumber));
+          table.push(new CommonRow(rowId, oldRow.text, oldRow.rowNumber, newRow.rowNumber));
+          rowId++;
           oldTextPointer++;
           newTextPointer++;
         } else if (oldRow.id < newRow.id) {
-          table.push(new CommonRow(oldRow.id, oldRow.text, oldRow.rowNumber, null));
+          table.push(new CommonRow(rowId, oldRow.text, oldRow.rowNumber, null));
           oldTextPointer++;
+          rowId++;
         } else {
-          table.push(new CommonRow(newRow.id, newRow.text, null, newRow.rowNumber));
+          table.push(new CommonRow(rowId, newRow.text, null, newRow.rowNumber));
+          rowId++;
           newTextPointer++;
         }
       } else {
         if (oldTextPointer === oldText.length && newTextPointer !== newText.length) {
-          table.push(new CommonRow(newRow.id, newRow.text, null, newRow.rowNumber));
+          table.push(new CommonRow(rowId, newRow.text, null, newRow.rowNumber));
           newTextPointer++;
+          rowId++;
           continue;
         }
         if (oldTextPointer !== oldText.length && newTextPointer === newText.length) {
-          table.push(new CommonRow(oldRow.id, oldRow.text, oldRow.rowNumber, null));
+          table.push(new CommonRow(rowId, oldRow.text, oldRow.rowNumber, null));
           oldTextPointer++;
+          rowId++;
         }
       }
     }
@@ -122,6 +128,9 @@ export class DiffPageComponent implements OnInit {
     const message = form.controls['text'].value;
     const a = {};
     a[this.selectedText[rowId]] = new Comment('Admin', message, new Date(), rowId);
+    console.log(this.diffService.oldRowIds);
+    console.log(this.diffService.newRowIds);
+    console.log(this.table);
     Object.assign(this.commentService.comments[rowId], a);
     this.visibleCommentCreation[rowId] = false;
     this.commentService.transformComments();
