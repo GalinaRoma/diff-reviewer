@@ -1,11 +1,13 @@
-import {Component, OnInit, HostListener} from '@angular/core';
-import {NgForm} from '@angular/forms';
+import { Component, OnInit, HostListener } from '@angular/core';
+import { NgForm } from '@angular/forms';
 import { MatDialog } from '@angular/material';
 
 import { Comment } from '../../../core/models/comment';
 import { CommonRow } from '../../../core/models/common-row';
 import { Row } from '../../../core/models/row';
-import {CommentMockService} from '../../../core/services/comment-mock.service';
+import { SelectedText } from '../../../core/models/selected-text';
+import {SelectionElement} from '../../../core/models/selection-element';
+import { CommentMockService } from '../../../core/services/comment-mock.service';
 import { DiffService } from '../../../core/services/diff.service';
 import { ModalSideBySideComponent } from '../modal-side-by-side/modal-side-by-side.component';
 
@@ -23,7 +25,7 @@ export class DiffPageComponent implements OnInit {
    */
   public table: CommonRow[];
   public visibleCommentCreation: Boolean[] = [];
-  public selectedText: string[] = [];
+  public selectedText: SelectedText[] = [];
 
   constructor(public diffService: DiffService, public dialog: MatDialog, public commentService: CommentMockService) {}
 
@@ -46,7 +48,7 @@ export class DiffPageComponent implements OnInit {
     this.table = this.createDiffTable(oldVersionText, newVersionText);
     for (let i = 0; i < this.table.length; i++) {
       if (!this.commentService.comments[i]) {
-        this.commentService.comments[i] = {};
+        this.commentService.comments[i] = new Array<SelectionElement>();
       }
     }
     this.commentService.transformComments();
@@ -65,7 +67,6 @@ export class DiffPageComponent implements OnInit {
     const table = [];
     let oldTextPointer = 0;
     let newTextPointer = 0;
-    let rowId = 0;
     for (let i = 0; i < oldText.length + newText.length; i++) {
       const oldRow = oldText[oldTextPointer];
       const newRow = newText[newTextPointer];
@@ -79,30 +80,25 @@ export class DiffPageComponent implements OnInit {
           continue;
         }
         if (oldRow.text === newRow.text) {
-          table.push(new CommonRow(rowId, oldRow.text, oldRow.rowNumber, newRow.rowNumber));
-          rowId++;
+          table.push(new CommonRow(oldRow.id, oldRow.text, oldRow.rowNumber, newRow.rowNumber));
           oldTextPointer++;
           newTextPointer++;
         } else if (oldRow.id < newRow.id) {
-          table.push(new CommonRow(rowId, oldRow.text, oldRow.rowNumber, null));
+          table.push(new CommonRow(oldRow.id, oldRow.text, oldRow.rowNumber, null));
           oldTextPointer++;
-          rowId++;
         } else {
-          table.push(new CommonRow(rowId, newRow.text, null, newRow.rowNumber));
-          rowId++;
+          table.push(new CommonRow(newRow.id, newRow.text, null, newRow.rowNumber));
           newTextPointer++;
         }
       } else {
         if (oldTextPointer === oldText.length && newTextPointer !== newText.length) {
-          table.push(new CommonRow(rowId, newRow.text, null, newRow.rowNumber));
+          table.push(new CommonRow(newRow.id, newRow.text, null, newRow.rowNumber));
           newTextPointer++;
-          rowId++;
           continue;
         }
         if (oldTextPointer !== oldText.length && newTextPointer === newText.length) {
-          table.push(new CommonRow(rowId, oldRow.text, oldRow.rowNumber, null));
+          table.push(new CommonRow(oldRow.id, oldRow.text, oldRow.rowNumber, null));
           oldTextPointer++;
-          rowId++;
         }
       }
     }
@@ -110,11 +106,12 @@ export class DiffPageComponent implements OnInit {
   }
 
   @HostListener('document:selectionchange') public createMessage(): void {
-    const selectElem = document.getSelection();
-    const selectedText = selectElem.toString();
+    const selection = document.getSelection();
+    const selectedText = selection.toString();
+    const selectedElem = new SelectedText(selection.baseOffset, selection.extentOffset, selectedText);
     if (selectedText !== '' && selectedText !== '\n') {
-      const id = selectElem.baseNode.parentElement.id;
-      this.selectedText[Number(id)] = selectedText;
+      const id = selection.baseNode.parentElement.id;
+      this.selectedText[Number(id)] = selectedElem;
       this.visibleCommentCreation[Number(id)] = true;
     }
   }
@@ -126,12 +123,8 @@ export class DiffPageComponent implements OnInit {
   public loadComment(event: Event, form: NgForm, rowId: number): void {
     event.preventDefault();
     const message = form.controls['text'].value;
-    const a = {};
-    a[this.selectedText[rowId]] = new Comment('Admin', message, new Date(), rowId);
-    console.log(this.diffService.oldRowIds);
-    console.log(this.diffService.newRowIds);
-    console.log(this.table);
-    Object.assign(this.commentService.comments[rowId], a);
+    this.commentService.comments[rowId].push(new SelectionElement(
+      new Comment('Admin', message, new Date(), rowId), this.selectedText[rowId]));
     this.visibleCommentCreation[rowId] = false;
     this.commentService.transformComments();
   }
