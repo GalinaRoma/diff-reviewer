@@ -10,10 +10,14 @@
 
   <ng-container matColumnDef="text">
     <td class="text" data-id={{element.id}} mat-cell *matCellDef="let element"
-        [class.new-text]="diffService.isNewRow(element.id)" (textSelect)="createMessage()" [class.old-text]="diffService.isOldRow(element.id)">
+        (textSelect)="createMessage()"
+        [class.new-text]="diffService.isNewRow(element.id)"
+        [class.old-text]="diffService.isOldRow(element.id)">
       {{element.text}}
       <div class="comment" *ngIf="visibleCommentCreation[element.id]">
-        <button class="icon-button close-button" (click)="closeComment($event, element.id)"><i class="far fa-window-close"></i></button>
+        <button class="icon-button close-button" (click)="closeComment($event, element.id)">
+          <i class="far fa-window-close"></i>
+        </button>
         <form class="comment-form" #commentForm="ngForm" (ngSubmit)="loadComment($event, commentForm, element.id)">
           <mat-form-field class="comment-text">
             <input matInput type="text" name="text" placeholder="Enter your comment" ngModel/>

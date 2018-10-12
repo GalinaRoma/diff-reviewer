@@ -31,10 +31,6 @@
 .send-comment-button {
   width: 98%;
 }
-div[class^="mat-form-field-wrapper"] {
-  padding: 0;
-  line-height: normal;
-}
 .icon-button {
   border: 0;
   background: #fff;

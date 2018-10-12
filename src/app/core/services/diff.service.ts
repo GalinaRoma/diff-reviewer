@@ -7,7 +7,6 @@ import {Row} from '../models/row';
 import {RowType} from '../models/row-type.enum';
 
 import {InputService} from './input.service';
-import {CommonRow} from '../models/common-row';
 
 /**
  * Service to get diff and process it to the two text versions arrays.
@@ -99,7 +98,6 @@ export class DiffService {
         rowType));
     }
     rowsToNextDisplay.push(new InputRow(action, partOfNextLine));
-
     return [rowNumber, rowsToNextDisplay];
   }
 
@@ -132,6 +130,7 @@ export class DiffService {
   /**
    * Transform diff tables.
    * Add extra empty lines opposite the deleted or added line.
+   * Change ids: common rows have the same id.
    *
    * @param {Row[]} oldText Rows of the old text version.
    * @param {Row[]} newText Rows of the new text version.
@@ -141,6 +140,7 @@ export class DiffService {
     const modifiedNewVersionText = [];
     let oldTextPointer = 0;
     let newTextPointer = 0;
+    let idCounter = 0;
     for (let i = 0; i < oldText.length + newText.length; i++) {
       const oldRow = oldText[oldTextPointer];
       const newRow = newText[newTextPointer];
@@ -148,16 +148,23 @@ export class DiffService {
         break;
       }
       if (newText.length !== newTextPointer && oldText.length !== oldTextPointer && oldRow.text === newRow.text) {
+        oldRow.id = idCounter;
+        newRow.id = idCounter;
         modifiedOldVersionText.push(oldRow);
         modifiedNewVersionText.push(newRow);
+        idCounter++;
         oldTextPointer++;
         newTextPointer++;
       } else if (newTextPointer === newText.length || (oldTextPointer !== oldText.length && oldRow.id < newRow.id)) {
+        oldRow.id = idCounter;
         modifiedOldVersionText.push(oldRow);
+        idCounter++;
         oldTextPointer++;
         modifiedNewVersionText.push(new Row(null, '', null));
       } else if (oldTextPointer === oldText.length || (newTextPointer !== newText.length && oldRow.id >= newRow.id)) {
+        newRow.id = idCounter;
         modifiedNewVersionText.push(newRow);
+        idCounter++;
         newTextPointer++;
         modifiedOldVersionText.push(new Row(null, '', null));
       }
